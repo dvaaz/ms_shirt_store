@@ -1,0 +1,4 @@
+Para gerar um pedido é preciso um Json com um array contendo as ids de produtos.
+Não havendo possibilidade de criar itens diretaemnte do pedido. 
+o Service item_pedido será o responsavel pela comunicacao entre apis
+
