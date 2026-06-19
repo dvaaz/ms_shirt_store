@@ -26,14 +26,30 @@ export class PagamentoController {
     return this.pagamentoService.create(userId, createPagamentoDto);
   }
 
-    @Get('/h')
-    @ApiOperation({
-      summary:
-        'Health Check: ' +'Pagamento'
-    })
-    healthCheck() {
-      return true
-    }
+  @Get('/all')
+  @ApiOperation({
+    summary: 'Todos pagamentos cadastrados',
+  })
+  @HttpCode(HttpStatus.OK)
+  getAll() {
+    return this.pagamentoService.getAll();
+  }
+
+  // @Get('/teste')
+  // teste(
+  //   @Headers('userId') userId: string,
+  //   @Param('pedidoId') pedidoId: string,
+  // ) {
+  //   return this.pagamentoService.buscarPedidoDoUsuario(userId, pedidoId);
+  // }
+
+  @Get('/h')
+  @ApiOperation({
+    summary: 'Health Check: ' + 'Pagamento',
+  })
+  healthCheck() {
+    return true;
+  }
 
   @Get(':id/status')
   @HttpCode(HttpStatus.OK)

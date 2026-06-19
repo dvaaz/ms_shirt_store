@@ -42,7 +42,7 @@ type PagamentoConsulta = {
 @Injectable()
 export class PagamentoService {
   private readonly statusAguardandoAuth = 'AGUARDANDO_AUTH';
-  private readonly statusPago = 'PAGO';
+  private readonly statusPago = 'APROVADO';
   private readonly metodoCartaoCredito = 'CARTAO_CREDITO';
   private readonly defaultNumeroParcelas = 1;
   private readonly statusPedidoAceito = 'ACEITO';
@@ -85,6 +85,16 @@ export class PagamentoService {
     }
 
     return status;
+  }
+
+  /**
+   * Modulo para producao, teste banco
+   * @param pagamentoUuid
+   * @returns
+   */
+  async getAll() {
+    const pagamentos = await this.prisma.pagamento.findMany();
+    return pagamentos;
   }
 
   private async buscarPagamento(pagamentoUuid: string) {
@@ -134,9 +144,9 @@ export class PagamentoService {
 
   /**
    * Buscar pagamento do usuário
-   * @param userId 
-   * @param pagamentoUuid 
-   * @returns 
+   * @param userId
+   * @param pagamentoUuid
+   * @returns
    */
   private async buscarPagamentoDoUsuario(
     userId: string,
@@ -151,17 +161,20 @@ export class PagamentoService {
     }
 
     if (pagamento.pedido.usuario_uuid !== userId) {
-      throw new NotFoundException('Pagamento não encontrado para usuario', userId);
+      throw new NotFoundException(
+        'Pagamento não encontrado para usuario',
+        userId,
+      );
     }
 
     return pagamento;
   }
 
-
   private async buscarPedidoDoUsuario(usuarioId: string, pedidoUuid: string) {
-    const pedido = await this.prisma.pedido.findUnique({
+    const pedido = await this.prisma.pedido.findFirst({
       where: {
         pedido_uuid: pedidoUuid,
+        usuario_uuid: usuarioId,
       },
       select: {
         pedido_uuid: true,
@@ -173,10 +186,20 @@ export class PagamentoService {
             status_pedido_nome: true,
           },
         },
+        pagamento: {
+          include: {
+            status_pagamento: {
+              select: {
+                status_pagamento_nome: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (!pedido || pedido.usuario_uuid !== usuarioId) {
+      // provavelmente nao acontecera, mas por via das dúvidas...
       throw new NotFoundException('Pedido não encontrado');
     }
 
@@ -235,6 +258,17 @@ export class PagamentoService {
     if (pedido.pedido_valor_total <= 0) {
       throw new BadRequestException(
         'O pedido precisa ter valor total maior que zero',
+      );
+    }
+
+    // checar se há pagamento associado e caso haja um pagamento em andamento ou realizado
+    const statusPagamentoVerificado = pedido.pagamento.some((i) => [
+      this.statusAguardandoAuth,
+      this.statusPago,
+    ]);
+    if (statusPagamentoVerificado) {
+      throw new BadRequestException(
+        'Já há pagamento realizado ou em antamento',
       );
     }
 
@@ -331,6 +365,12 @@ export class PagamentoService {
     };
   }
 
+  /**
+   * Funcao Mock para confirmar pagamento
+   * @param userId
+   * @param pagamentoUuid
+   * @returns
+   */
   async efetuarPagamento(
     userId: string,
     pagamentoUuid: string,
