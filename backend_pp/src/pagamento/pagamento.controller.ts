@@ -35,13 +35,13 @@ export class PagamentoController {
     return this.pagamentoService.getAll();
   }
 
-  // @Get('/teste')
-  // teste(
-  //   @Headers('userId') userId: string,
-  //   @Param('pedidoId') pedidoId: string,
-  // ) {
-  //   return this.pagamentoService.buscarPedidoDoUsuario(userId, pedidoId);
-  // }
+  @Get('/teste')
+  teste(
+    @Headers('userId') userId: string,
+    @Param('pedidoId') pedidoId: string,
+  ) {
+    return this.pagamentoService.buscarPedidoDoUsuario(userId, pedidoId);
+  }
 
   @Get('/h')
   @ApiOperation({

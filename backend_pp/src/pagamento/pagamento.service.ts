@@ -41,8 +41,9 @@ type PagamentoConsulta = {
 // O serviço de pagamento é responsável por toda a lógica relacionada à criação e atualização de pagamentos,
 @Injectable()
 export class PagamentoService {
-  private readonly statusAguardandoAuth = 'AGUARDANDO_AUTH';
-  private readonly statusPago = 'APROVADO';
+  private readonly statusPagamentoAguardando = 'AGUARDANDO_AUTH';
+  private readonly statusPagamentoPago = 'APROVADO';
+  private readonly statusPagamentoRejeitado = 'REJEITADO';
   private readonly metodoCartaoCredito = 'CARTAO_CREDITO';
   private readonly defaultNumeroParcelas = 1;
   private readonly statusPedidoAceito = 'ACEITO';
@@ -170,7 +171,7 @@ export class PagamentoService {
     return pagamento;
   }
 
-  private async buscarPedidoDoUsuario(usuarioId: string, pedidoUuid: string) {
+  async buscarPedidoDoUsuario(usuarioId: string, pedidoUuid: string) {
     const pedido = await this.prisma.pedido.findFirst({
       where: {
         pedido_uuid: pedidoUuid,
@@ -262,10 +263,11 @@ export class PagamentoService {
     }
 
     // checar se há pagamento associado e caso haja um pagamento em andamento ou realizado
-    const statusPagamentoVerificado = pedido.pagamento.some((i) => [
-      this.statusAguardandoAuth,
-      this.statusPago,
-    ]);
+    const statusPagamentoVerificado = pedido.pagamento.some((pagamentoCriado) =>
+      [this.statusPagamentoAguardando, this.statusPagamentoPago].includes(
+        pagamentoCriado.status_pagamento?.status_pagamento_nome,
+      ),
+    );
     if (statusPagamentoVerificado) {
       throw new BadRequestException(
         'Já há pagamento realizado ou em antamento',
@@ -304,13 +306,11 @@ export class PagamentoService {
       this.normalize(metodo.metodo_de_pagamento_nome) !==
         this.metodoCartaoCredito
     ) {
-      throw new BadRequestException(
-        'Pagamentos parcelados só podem ser feitos com cartão de crédito',
-      );
+      createPagamentoDto.pagamento_numero_parcelas = 1;
     }
 
-    const statusAguardandoAuth = await this.buscarStatus(
-      this.statusAguardandoAuth,
+    const statusPagamentoAguardando = await this.buscarStatus(
+      this.statusPagamentoAguardando,
     );
     const pagamentoUuid = uuidv7();
     const codigoDoPagamento = uuidv7();
@@ -325,7 +325,7 @@ export class PagamentoService {
         codigo_do_pagamento: codigoDoPagamento,
         pedido_uuid: pedido.pedido_uuid,
         metodos_de_pagamento_id: metodo.metodos_de_pagamento_id,
-        status_pagamento_id: statusAguardandoAuth.status_pagamento_id,
+        status_pagamento_id: statusPagamentoAguardando.status_pagamento_id,
         pagamento_numero_parcelas: numeroParcelas,
         pagamento_valor_primeira_parcela: parcelamento.valorPrimeiraParcela,
         pagamento_valor_parcelas: parcelamento.valorParcelas,
@@ -382,19 +382,31 @@ export class PagamentoService {
 
     if (
       this.normalize(pagamentoAtual.status_pagamento.status_pagamento_nome) !==
-      this.statusAguardandoAuth
+      this.statusPagamentoAguardando
     ) {
       throw new BadRequestException(
         'Só é possível efetuar pagamentos aguardando autorização',
       );
     }
 
-    const statusPago = await this.buscarStatus(this.statusPago);
+    // -----------------------------------------------------------  \\
+    // -------------------- Bloco do mock ------------------------- \\
+    // ------------------------------------------------------------ \\
+    let statusPagamentoAleatorio = this.statusPagamentoPago;
+
+    const dado = Math.floor(Math.random() * 100) + 1;
+    if (dado % 25 === 0) {
+      statusPagamentoAleatorio = this.statusPagamentoRejeitado;
+    }
+
+    const statusPagamentoNovo = await this.buscarStatus(
+      statusPagamentoAleatorio,
+    );
 
     const pagamento = await this.prisma.pagamento.update({
       where: { pagamento_uuid: pagamentoUuid },
       data: {
-        status_pagamento_id: statusPago.status_pagamento_id,
+        status_pagamento_id: statusPagamentoNovo.status_pagamento_id,
       },
       select: {
         pagamento_uuid: true,
