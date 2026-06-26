@@ -1,4 +1,4 @@
-import styles from './CardPedidoProduto.module.css';
+import styles from "./CardPedidoProduto.module.css";
 
 export default function CardPedidoProduto({ produto, onComprarNovamente }) {
   const handleComprarNovamente = () => {
@@ -8,19 +8,30 @@ export default function CardPedidoProduto({ produto, onComprarNovamente }) {
     });
   };
 
-
   return (
     <div className={styles.container}>
-      <img className={styles.avatar} src={produto.imagem} alt={produto.item_pedido_nome_produto} />
+      <img
+        className={styles.image}
+        src={produto.imagem}
+        alt={produto.item_pedido_nome_produto}
+      />
+      <div className={styles.info}>
+        <h3 className={styles.title}>{produto.item_pedido_nome_produto}</h3>
 
-      <h3>{produto.item_pedido_nome_produto}</h3>
+        <span className={styles.price}>
+          Preço:
+          <span className={styles.value}> R$ {produto.item_pedido_preco}</span>
+        </span>
 
-      <p className={styles.price}>R$ {produto.item_pedido_preco}</p>
-
-      <span>Qtde: {produto.item_pedido_quantidade}</span>
-
-      <button onClick={() => onComprarNovamente(produto)}>
-        Comprar novamente
+        <span className={styles.quantity}>
+          Qtde: {produto.item_pedido_quantidade}
+        </span>
+      </div>
+      <button
+        className={styles.button}
+        onClick={() => onComprarNovamente(produto)}
+      >
+        <span className={styles.textButton}>Comprar novamente</span>
       </button>
     </div>
   );

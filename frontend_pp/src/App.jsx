@@ -2,7 +2,6 @@ import "./App.css";
 import CardPedidoProduto from "./components/historicoPedido/CardPedidoProduto";
 
 function App() {
-
   return (
     <>
       <CardPedidoProduto
@@ -12,7 +11,7 @@ function App() {
           item_pedido_quantidade: 1,
           imagem:
             "https://m.media-amazon.com/images/I/71UmzTwO2vL._AC_UL320_.jpg",
-          item_pedido_preco: 49.9,
+          item_pedido_preco: "49.90",
         }}
         onComprarNovamente={(produto) => {
           console.log("Comprar novamente:", produto);

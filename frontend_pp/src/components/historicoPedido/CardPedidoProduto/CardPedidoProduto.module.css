@@ -1,12 +1,90 @@
-.container{
+.container {
     justify-content: flex-start;
+    position: relative;
+    overflow: hidden;
+    width: 42.375rem;
+    height: 10.3125rem;
+    border-radius: 0.3125rem;
+    background: #faf6f6;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 10px);
+    grid-template-rows: repeat(auto-fill, 10px);
+    text-align: left;
+    font-size: 18px;
+    color: #000;
 }
 
-.avatar{
-    max-width: 50rem;
-    max-height: 50rem;
+.image {
+    position: absolute;
+    top: calc(50% - 82.5px);
+    left: 0px;
+    width: 10.5 rem;
+    height: 10.5rem;
+    object-fit: cover;
 }
 
-.price{
-    color: rgb(0, 81, 255);
+.title {
+    position: absolute;
+    top: 0.2rem;
+    left: 11.81rem;
+    background-color: #faf6f6;
+    width: 14.43rem;
+    height: 3.5rem;
+    overflow: hidden;
+}
+
+.price {
+    position: absolute;
+    top: 5.56rem;
+    left: 12.5rem;
+    width: 4.68rem;
+    height: 2.87rem;
+    overflow: hidden;
+    font-size: 0.625rem;
+    color: #0f101c;
+}
+
+.value {
+    color: #2630ee;
+    font-size: 0.58rem;
+    word-break: break-all;
+}
+
+.quantity {
+    position: absolute;
+    top: 5.56rem;
+    left: 18.25rem;
+    width: 4.6875rem;
+    height: 2.87rem;
+    overflow: hidden;
+    text-align: center;
+    font-size: 0.65rem;
+}
+
+.textButton {
+    color: "#fefefe";
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12.1875rem;
+    height: 3.8125rem;
+}
+
+.button {
+    position: absolute;
+    top: calc(50% - 1.78125rem);
+    left: 28.5rem;
+    box-shadow: 0 0.25rem 0.25rem rgba(0, 0, 0, 0.25);
+    border-radius: 0.625rem;
+    background: linear-gradient(90deg, #155dfc 3.41%, #9400ff);
+    width: 12.1875rem;
+    height: 3.8125rem;
+    overflow: hidden;
+    text-align: center;
+    font-size: 0.9375rem;
+    color: #fff;
 }
