@@ -1,0 +1,12 @@
+.container{
+    justify-content: flex-start;
+}
+
+.avatar{
+    max-width: 50rem;
+    max-height: 50rem;
+}
+
+.price{
+    color: rgb(0, 81, 255);
+}

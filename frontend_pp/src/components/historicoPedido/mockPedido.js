@@ -1,11 +1,11 @@
-export const pedidos = [
+export const pedido = [
   {
     pedido_uuid: "1001",
     status_pedido: "Entregue",
     pedido_valor_total: 329.5,
     pedido_created_at: "24/06/2026",
     invoiceUrl: "/notafiscal1.pdf",
-    item_pedido: [
+    produto: [
       {
         id: "p1",
         item_pedido_nome_produto: "Camisa Pele",
