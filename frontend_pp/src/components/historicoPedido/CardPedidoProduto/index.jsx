@@ -16,8 +16,15 @@ export default function CardPedidoProduto({ produto, onComprarNovamente }) {
         alt={produto.item_pedido_nome_produto}
       />
       <div className={styles.info}>
-        <h3 className={styles.title}>{produto.item_pedido_nome_produto}</h3>
-
+        <div className={styles.titleDiv}>
+          <h3 className={styles.title} title={produto.item_pedido_nome_produto}>
+            {produto.item_pedido_nome_produto}
+          </h3>
+          {/* hoover */}
+          <div className={styles.tooltip}>
+            {produto.item_pedido_nome_produto}
+          </div>
+        </div>
         <span className={styles.price}>
           Preço:
           <span className={styles.value}> R$ {produto.item_pedido_preco}</span>

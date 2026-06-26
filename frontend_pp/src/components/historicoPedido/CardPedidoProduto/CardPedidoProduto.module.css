@@ -12,7 +12,7 @@
     grid-template-rows: repeat(auto-fill, 10px);
     text-align: left;
     font-size: 18px;
-    color: #000;
+    color: #040404;
 }
 
 .image {
@@ -24,14 +24,63 @@
     object-fit: cover;
 }
 
-.title {
-    position: absolute;
-    top: 0.2rem;
+.titleDiv {
+    position: relative;
+    top: 0.8rem;
     left: 11.81rem;
     background-color: #faf6f6;
     width: 14.43rem;
-    height: 3.5rem;
+    cursor: default;
+}
+.title {
+    margin: 0;
+
+    font-size: 1.2rem;
+    font-family: Arial;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
     overflow: hidden;
+    text-overflow: ellipsis;
+
+    line-height: 1.4rem;
+}
+.tooltip {
+    position: absolute;
+
+    left: 0;
+    top: 100%;
+
+    width: 22rem;
+
+    padding: 12px;
+
+    background: #fff;
+
+    border-radius: 8px;
+
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+    z-index: 999;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(10px);
+
+    transition:
+        opacity 0.25s,
+        transform 0.25s,
+        visibility 0.25s;
+}
+.titleDiv:hover .tooltip {
+    opacity: 1;
+
+    visibility: visible;
+
+    transform: translateY(0);
 }
 
 .price {
