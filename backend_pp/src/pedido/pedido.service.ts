@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
   InternalServerErrorException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { UpdatePedidoDto } from './dto/update-pedido.dto';
@@ -26,9 +27,30 @@ import { error } from 'console';
 import { ResponseListaPedidoDTO } from './dto/response-lista-pedido.dto.js';
 
 @Injectable()
-export class PedidoService {
+export class PedidoService implements OnModuleInit {
   private readonly uuidv7Regex =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+
+  private readonly status = new Map<string, number>();
+
+  // Ao iniciar o modulo carrega os status do pedido e os armazena no Map
+  async onModuleInit() {
+    const statusPedido = await this.prisma.status_pedido.findMany({
+      select: {
+        status_pedido_id: true,
+        status_pedido_nome: true,
+      },
+    });
+
+    statusPedido
+      .filter(
+        (status): status is typeof status & { status_pedido_nome: string } =>
+          status.status_pedido_nome !== null,
+      )
+      .forEach((status) => {
+        this.status.set(status.status_pedido_nome, status.status_pedido_id);
+      });
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -89,7 +111,7 @@ export class PedidoService {
               item_pedido_nome_produto: true,
               item_pedido_preco: true,
               item_pedido_quantidade: true,
-              item_pedido_id: true
+              item_pedido_id: true,
             },
           },
         },
@@ -124,7 +146,7 @@ export class PedidoService {
         produto_nome: item.item_pedido_nome_produto,
         preco_unitario: this.valueToCentsSimple(item.item_pedido_preco),
         quantidade: item.item_pedido_quantidade,
-        id_produto: item.item_pedido_id
+        id_produto: item.item_pedido_id,
       })),
     };
 
@@ -188,16 +210,8 @@ export class PedidoService {
     // cria GUID do pedido
     const pedidoUuid = uuidv7(); // Gera um UUID para o pedido utilizando a função uuid versao 7
 
-    const statusPedido = await this.prisma.status_pedido.findFirst({
-      where: {
-        status_pedido_nome: 'ACEITO',
-      },
-      select: {
-        status_pedido_id: true,
-      },
-    });
-
-    if (!statusPedido) {
+    const statusPedidoIdPendente = this.status.get('PENDENTE') || 1;
+    if (!statusPedidoIdPendente) {
       throw new NotFoundException('Status do pedido não encontrado');
     }
 
@@ -209,7 +223,7 @@ export class PedidoService {
         createPedidoDto.destinatario || 'Destinatário não informado',
       endereco_de_entrega_uuid: endereco?.endereco_uuid || '',
       pedido_valor_total: 0,
-      status_pedido_id: statusPedido.status_pedido_id,
+      status_pedido_id: statusPedidoIdPendente,
     };
 
     // Cria um array para armazenar as IDs do item do pedido vindos no dto CreatePedidoDto.
@@ -233,20 +247,30 @@ export class PedidoService {
     const [createProdutosPedido, valorTotalDoPedido] =
       await this.produtoPedido.create(pedidoUuid, produtosPedido);
 
+    // Caso haja problema em anexar os itens ao pedido
     if (!createProdutosPedido || createProdutosPedido.length === 0) {
-      throw new BadRequestException(
-        'O pedido deve conter pelo menos um item válido',
-      );
+      const statusPedidoIdRejeitado = this.status.get('REJEITADO') || 12;
+
+      // Atualiza o status do pedido para REJEITADO e retorna a funcao
+      const response = await this.prisma.pedido.update({
+        where: { pedido_uuid: pedidoUuid },
+        data: { status_pedido_id: statusPedidoIdRejeitado },
+      });
+      return {
+        usuario_uuid: response.usuario_uuid,
+        pedido_uuid: response.pedido_uuid,
+      };
     }
 
     // Incluir o valor total do pedido dos itens que foram ao pedido
-    //
+
+    const statusPedidoIdAprovado = this.status.get('APROVADO') || 6;
     const response = await this.prisma.pedido
       .update({
         where: { pedido_uuid: pedidoUuid },
         data: {
           pedido_valor_total: valorTotalDoPedido,
-          status_pedido_id: statusPedido.status_pedido_id,
+          status_pedido_id: statusPedidoIdAprovado,
         },
         select: {
           pedido_uuid: true,
@@ -293,7 +317,7 @@ export class PedidoService {
               item_pedido_nome_produto: true,
               item_pedido_preco: true,
               item_pedido_quantidade: true,
-              item_pedido_id: true
+              item_pedido_id: true,
             },
           },
         },
@@ -326,7 +350,7 @@ export class PedidoService {
             produto_nome: item.item_pedido_nome_produto,
             preco_unitario: this.valueToCentsSimple(item.item_pedido_preco),
             quantidade: item.item_pedido_quantidade,
-            id_produto: item.item_pedido_id
+            id_produto: item.item_pedido_id,
           })),
         }),
       );
@@ -343,7 +367,7 @@ export class PedidoService {
    * Find all que traz apenas a UUId do Pedido, status, quando foi criado o pedido
    */
   async findAllSimple(userId: string): Promise<ResponseListaPedidoDTO[]> {
-try {
+    try {
       const pedidos = await this.prisma.pedido.findMany({
         where: { usuario_uuid: userId },
         select: {
@@ -354,7 +378,7 @@ try {
             select: {
               status_pedido_nome: true,
             },
-          }
+          },
         },
       });
       if (!pedidos || pedidos.length === 0) {
@@ -371,17 +395,13 @@ try {
         );
       }
 
-      const response: ResponseListaPedidoDTO[] = pedidos.map(
-        (pedido) => ({
-          pedido_uuid: pedido.pedido_uuid,
-          pedido_valor_total: this.valueToCentsSimple(
-            pedido.pedido_valor_total,
-          ),
-          status_pedido:
-            pedido.status_pedido?.status_pedido_nome || 'Status não encontrado',
-          pedido_created_at: pedido.pedido_created_at
-        }),
-      );
+      const response: ResponseListaPedidoDTO[] = pedidos.map((pedido) => ({
+        pedido_uuid: pedido.pedido_uuid,
+        pedido_valor_total: this.valueToCentsSimple(pedido.pedido_valor_total),
+        status_pedido:
+          pedido.status_pedido?.status_pedido_nome || 'Status não encontrado',
+        pedido_created_at: pedido.pedido_created_at,
+      }));
 
       return response;
     } catch (error) {
@@ -390,7 +410,6 @@ try {
       );
     }
   }
-  
 
   /**
    *
@@ -465,29 +484,40 @@ try {
     }
 
     const nomeStatus = statusAtual.status_pedido.status_pedido_nome;
-    // Presando responsabilidade unica essa funcao nao bloqueara os pedidos cancelados, rejeitados ou entregues. Apesar de que eu acredite que isso pouparia microsegundos do processo
-    const novoStatusId: number =
-      await this.statusPedido.updateStatusPedido(nomeStatus);
-    console.log('Novo Status ID:', novoStatusId);
-    if (!novoStatusId) {
-      throw new BadRequestException(
-        `Não foi possível atualizar o status do pedido com o UUID ${id}. Status atual: ${statusAtual.status_pedido}`,
-      );
+    // verifica se o nome do status existe no Map de status, se existir tenta atualizar o status no banco de dados
+    if (nomeStatus in this.status) {
+      const novoStatusId: number = this.status.get(nomeStatus)!;
+      console.log('Novo Status ID:', novoStatusId);
+      if (!novoStatusId) {
+        throw new BadRequestException(
+          `Não foi possível atualizar o status do pedido com o UUID ${id}. Status atual: ${statusAtual.status_pedido}`,
+        );
+      }
+    } else {
+      // Presando responsabilidade unica essa funcao nao bloqueia os pedidos cancelados, rejeitados ou entregues. Apesar de que eu acredite que isso pouparia microsegundos do processo
+      const novoStatusId: number =
+        await this.statusPedido.updateStatusPedido(nomeStatus);
+      console.log('Novo Status ID:', novoStatusId);
+      if (!novoStatusId) {
+        throw new BadRequestException(
+          `Não foi possível atualizar o status do pedido com o UUID ${id}. Status atual: ${statusAtual.status_pedido}`,
+        );
+      }
+      // transforma o novoStatusId em number
+
+      const statusAtualizado = await this.prisma.pedido.update({
+        where: { pedido_uuid: id },
+        data: { status_pedido_id: novoStatusId },
+      });
+
+      if (!statusAtualizado) {
+        throw new NotFoundException(
+          `Não foi possível atualizar o status do pedido com o UUID ${id}.`,
+        );
+      }
+
+      return true;
     }
-    // transforma o novoStatusId em number
-
-    const statusAtualizado = await this.prisma.pedido.update({
-      where: { pedido_uuid: id },
-      data: { status_pedido_id: novoStatusId },
-    });
-
-    if (!statusAtualizado) {
-      throw new NotFoundException(
-        `Não foi possível atualizar o status do pedido com o UUID ${id}.`,
-      );
-    }
-
-    return true;
   }
 
   /**
@@ -592,7 +622,10 @@ try {
       throw new NotFoundException('Pedido não encontrado');
     }
 
-    if (request.status_pedido.status_pedido_nome !== 'ENTREGUE') {
+    if (
+      request.status_pedido.status_pedido_nome === 'ENTREGUE' ||
+      request.status_pedido.status_pedido_nome === 'DEVOLUCAO'
+    ) {
       return false;
     }
     return true;

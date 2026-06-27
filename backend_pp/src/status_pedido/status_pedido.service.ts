@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import type { CreateStatusPedidoDto } from './dto/create-status_pedido.dto';
 import type { UpdateStatusPedidoDto } from './dto/update-status_pedido.dto';
 import { PrismaService } from '../database/prisma/prisma.service';
@@ -9,8 +14,8 @@ import {
 
 // A única funcao do servico de status é gerenciar os pedidos no proprio sistema, o controller sera apagado ou reduzido a um endpoint de consulta, para adm.
 @Injectable()
-export class StatusPedidoService {
-  constructor(private readonly prisma: PrismaService) { }
+export class StatusPedidoService implements OnModuleInit {
+  constructor(private readonly prisma: PrismaService) {}
 
   // lógica de atualização do status do pedido:
   private arrayDeStatusRegistrados = [
@@ -23,6 +28,27 @@ export class StatusPedidoService {
     'ENVIADO',
     'ENTREGUE',
   ];
+
+  private readonly status = new Map<string, number>();
+
+  // Ao iniciar o modulo carrega os status do pedido e os armazena no Map
+  async onModuleInit() {
+    const statusPedido = await this.prisma.status_pedido.findMany({
+      select: {
+        status_pedido_id: true,
+        status_pedido_nome: true,
+      },
+    });
+
+    statusPedido
+      .filter(
+        (status): status is typeof status & { status_pedido_nome: string } =>
+          status.status_pedido_nome !== null,
+      )
+      .forEach((status) => {
+        this.status.set(status.status_pedido_nome, status.status_pedido_id);
+      });
+  }
 
   /**
    * Função para fazer a mudança do status do pedido de acordo com a lógica de negócio. retorna o id do status atualizado
@@ -38,7 +64,9 @@ export class StatusPedidoService {
     const statusFormatado = nome.trim().toUpperCase();
 
     if (!this.arrayDeStatusRegistrados.includes(statusFormatado)) {
-      throw new BadRequestException('Status do pedido não registrado no sistema');
+      throw new BadRequestException(
+        'Status do pedido não registrado no sistema',
+      );
     }
 
     const status = await this.prisma.status_pedido.findFirst({
@@ -50,7 +78,9 @@ export class StatusPedidoService {
     });
 
     if (!status) {
-      throw new NotFoundException('Status do pedido não encontrado no banco de dados');
+      throw new NotFoundException(
+        'Status do pedido não encontrado no banco de dados',
+      );
     }
 
     const indexDoStatusAtual = this.arrayDeStatusRegistrados.indexOf(
@@ -63,7 +93,9 @@ export class StatusPedidoService {
 
     // Bloqueia alterações se já estiver nos estados finais/imutáveis do fluxo linear
     if (indexDoStatusAtual === 0 || indexDoStatusAtual === 1) {
-      throw new BadRequestException(`Não é permitido atualizar um pedido cancelado ou devolvido.`);
+      throw new BadRequestException(
+        `Não é permitido atualizar um pedido cancelado ou devolvido.`,
+      );
     }
 
     if (indexDoStatusAtual === this.arrayDeStatusRegistrados.length - 1) {
@@ -73,17 +105,16 @@ export class StatusPedidoService {
     }
 
     const novoStatus = this.arrayDeStatusRegistrados[indexDoStatusAtual + 1];
-
-    const statusEncontrado = await this.prisma.status_pedido.findFirst({
-      where: { status_pedido_nome: novoStatus },
-      select: { status_pedido_id: true },
-    });
+    // Verifica o nome do status no mapa status feito no carregamento do modulo
+    const statusEncontrado = this.status.get(novoStatus);
 
     if (!statusEncontrado) {
-      throw new NotFoundException(`Próximo status (${novoStatus}) não foi populado no banco.`);
+      throw new NotFoundException(
+        `Próximo status (${novoStatus}) não foi populado no banco.`,
+      );
     }
 
-    return statusEncontrado.status_pedido_id;
+    return statusEncontrado;
   }
 
   ///////////------------------------------------------\\\\\\\\\\\\\\\\\\\\
