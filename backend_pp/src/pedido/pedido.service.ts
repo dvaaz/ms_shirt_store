@@ -601,33 +601,47 @@ export class PedidoService implements OnModuleInit {
    */
   async verificaCompraRealizada(
     userId: string,
-    compraId: string,
+    idProduto: number,
   ): Promise<boolean> {
-    const request = await this.prisma.pedido
-      .findUnique({
-        where: { pedido_uuid: compraId, usuario_uuid: userId },
+    try {
+      const request = await this.prisma.pedido.findMany({
+        where: { usuario_uuid: userId },
         select: {
+          pedido_uuid: true,
           status_pedido: {
             select: {
               status_pedido_nome: true,
             },
           },
+          item_pedido: {
+            where: {
+              item_pedido_id: idProduto,
+            },
+            select: {
+              item_pedido_nome_produto: true,
+              item_pedido_id: true,
+            },
+          },
         },
-      })
-      .catch((error) => {
-        throw new InternalServerErrorException('Erro ao validar compra');
       });
 
-    if (!request || !request.status_pedido) {
-      throw new NotFoundException('Pedido não encontrado');
-    }
-
-    if (
-      request.status_pedido.status_pedido_nome === 'ENTREGUE' ||
-      request.status_pedido.status_pedido_nome === 'DEVOLUCAO'
-    ) {
+      if (!request || !request[0]) {
+        throw new NotFoundException('Pedido não encontrado');
+      }
+      // percorre todo o array e verifica se há algum elemento status de entrega ENTREGUE ou DEVOLUCAO
+      for (const item of request) {
+        if (
+          item.status_pedido.status_pedido_nome === 'ENTREGUE' ||
+          item.status_pedido.status_pedido_nome === 'DEVOLUCAO'
+        ) {
+          return true;
+        }
+      }
       return false;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Erro ao verificar compra realizada',
+      );
     }
-    return true;
   }
 }

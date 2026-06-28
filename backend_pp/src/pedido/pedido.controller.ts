@@ -41,17 +41,15 @@ export class PedidoController {
 
   @Get('/h')
   @ApiOperation({
-    summary:
-      'Health Check: ' +'Pedido'
+    summary: 'Health Check: ' + 'Pedido',
   })
   healthCheck() {
-    return true
+    return true;
   }
 
   @Get()
   @ApiOperation({
-    summary:
-    'Busca pedidos de um usuário. Retorna Id de pedido e status'
+    summary: 'Busca pedidos de um usuário. Retorna Id de pedido e status',
   })
   findAll(@Headers('userId') userId: string) {
     return this.pedidoService.findAllSimple(userId);
@@ -77,9 +75,9 @@ export class PedidoController {
   })
   verificaCompraRealizada(
     @Headers('userId') userId: string,
-    @Param('id') id: string,
+    @Param('idProduto') idProduto: number,
   ): Promise<boolean> {
-    return this.pedidoService.verificaCompraRealizada(userId, id);
+    return this.pedidoService.verificaCompraRealizada(userId, idProduto);
   }
 
   @Patch('update-endereco/:id')

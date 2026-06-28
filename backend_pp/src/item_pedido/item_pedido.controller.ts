@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Headers,
 } from '@nestjs/common';
 import { ItemPedidoService } from './item_pedido.service';
 import { CreateItemPedidoDto } from './dto/create-item_pedido.dto';
@@ -19,8 +20,11 @@ export class ItemPedidoController {
 
   @Get(':pedidoId')
   @ApiTags('Produtos de um Pedido')
-  findAll(@Param('pedidoId') pedidoId: string) {
-    return this.itemPedidoService.findAll(pedidoId);
+  findAll(
+    @Headers('userId') userId: string,
+    @Param('pedidoId') pedidoId: string,
+  ) {
+    return this.itemPedidoService.findAll(userId, pedidoId);
   }
 
   @Patch(':id')

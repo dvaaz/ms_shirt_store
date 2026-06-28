@@ -56,11 +56,35 @@ export class ItemPedidoService {
     }
   }
 
-  async findAll(pedidoId: string): Promise<ItemPedidoModel[]> {
+  // async findAll(pedidoId: string): Promise<ItemPedidoModel[]> {
+  //   try {
+  //     return this.prisma.item_pedido.findMany({
+  //       where: { pedido_uuid: pedidoId },
+  //     });
+  //   } catch (error) {
+  //     throw new BadRequestException(
+  //       `Não foi possivel encontrar os itens do pedido ${error}`,
+  //     );
+  //   }
+  // }
+
+  async findAll(userId: string, pedidoId: string): Promise<ItemPedidoModel[]> {
     try {
-      return this.prisma.item_pedido.findMany({
-        where: { pedido_uuid: pedidoId },
+      const response = await this.prisma.item_pedido.findMany({
+        where: {
+          pedido_uuid: pedidoId,
+          pedido: {
+            usuario_uuid: userId,
+          },
+        },
       });
+      if (!response || response.length === 0) {
+        throw new BadRequestException(
+          `Não foi possivel encontrar os itens do pedido`,
+        );
+      }
+
+      return response;
     } catch (error) {
       throw new BadRequestException(
         `Não foi possivel encontrar os itens do pedido ${error}`,
