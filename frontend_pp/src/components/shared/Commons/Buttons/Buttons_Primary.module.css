@@ -1,0 +1,63 @@
+.button {
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.2s ease;
+  font-family: inherit;
+}
+
+.primary {
+  background: #c6ff00;
+  color: #111;
+}
+
+.primary:hover {
+  filter: brightness(0.95);
+}
+
+.outline {
+  background: transparent;
+  color: #c6ff00;
+  border: 1px solid #c6ff00;
+}
+
+.dark {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.danger {
+  background: #c6ff00;
+  color: #111;
+}
+
+.sm {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.md {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.lg {
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.full {
+  width: 100%;
+}
+
+.icon {
+  display: flex;
+}

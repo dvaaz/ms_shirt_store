@@ -1,0 +1,57 @@
+/* Card colapsável: título + seta; expande com transição de grid-rows 0fr → 1fr. */
+.card {
+  overflow: hidden;
+  border-radius: 0.75rem;          /* rounded-xl */
+  border: 1px solid #f3f4f6;       /* border-gray-100 */
+  background-color: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;                 /* p-6 */
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 1.125rem;             /* text-lg */
+  line-height: 1.75rem;
+  font-weight: 700;                /* font-bold */
+  color: #111827;                  /* text-gray-900 */
+}
+
+.chevron {
+  flex-shrink: 0;                  /* shrink-0 */
+  color: #6b7280;                  /* text-gray-500 */
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease-in-out;
+}
+
+.panelOpen {
+  grid-template-rows: 1fr;
+}
+
+.panelInner {
+  overflow: hidden;
+}
+
+.content {
+  padding: 0 1.5rem 1.5rem;        /* px-6 pb-6 */
+}

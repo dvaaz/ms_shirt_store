@@ -1,0 +1,147 @@
+.container {
+    width: 100%;
+    padding: 0.5rem;
+
+    border: 1px solid rgba(0, 0, 0, 0.29);
+    border-radius: 0.3125rem;
+
+    backdrop-filter: blur(0.125rem);
+}
+
+.card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-height: 3rem;
+
+    padding: 0.5rem 0.75rem;
+
+    border: none;
+    border-radius: 0.5rem;
+
+    background: rgba(255, 255, 255, 0.1);
+
+    box-shadow: 0 0.25rem 0.25rem -0.1875rem rgba(0, 0, 0, 0.25);
+
+    font: inherit;
+    cursor: pointer;
+}
+
+.text {
+    font-size: 0.75rem;
+    font-family: Inter, sans-serif;
+    font-weight: 400;
+}
+
+.pedido {
+    color: #000;
+}
+
+.preco {
+    color: #000;
+}
+
+.preco span {
+    color: #3d25c3;
+}
+
+.data {
+    color: #000;
+}
+
+.status {
+    width: 8.5rem;
+    height: 2.25rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: 0.1875rem solid #00ff00;
+    border-radius: 0.5rem;
+
+    color: #3b3b3b;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+
+    margin-top: 0.75rem;
+}
+
+.pagination span {
+    width: 0.875rem;
+    height: 0.875rem;
+
+    border-radius: 50%;
+
+    background: #111;
+}
+
+.statusYellow {
+    border-color: #ffeb3b;
+}
+
+.statusGreen {
+    border-color: #00ff00;
+}
+
+.statusBleu {
+    border-color: #2196f3;
+}
+
+.statusRed {
+    border-color: #ff3b3b;
+}
+
+.statusDefault {
+    border-color: #c9c9c9;
+}
+
+.detalhes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    margin-top: 0.75rem;
+}
+
+.loading,
+.error {
+    margin: 0;
+
+    font-size: 0.85rem;
+    font-family: Inter, sans-serif;
+    text-align: center;
+}
+
+.error {
+    color: #c0392b;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.notaFiscalButton {
+    padding: 0.5rem 1.25rem;
+
+    border: none;
+    border-radius: 0.5rem;
+
+    background: #d9d9d9;
+
+    font-size: 0.85rem;
+    font-family: Inter, sans-serif;
+    color: #3b3b3b;
+    cursor: pointer;
+}
+
+.notaFiscalButton:hover {
+    background: #c9c9c9;
+}
