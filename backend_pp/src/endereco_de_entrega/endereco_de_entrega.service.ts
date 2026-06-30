@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { uuidv7 } from 'uuidv7'; // Importa a função uuidv7 para gerar UUIDs
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import {
@@ -10,10 +10,37 @@ import {
   UpdateEnderecoDeEntregaDto as updateDto,
   UpdateEnderecoDeEntregaDto,
 } from './dto/update-endereco_de_entrega.dto';
+import EnderecoLojaConstants, {
+  EnderecoLojaConstantsType,
+} from '../common/constants/endereco_loja.constants.js';
 
 @Injectable()
-export class EnderecoDeEntregaService {
+export class EnderecoDeEntregaService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
+
+  private enderecoLoja: EnderecoEntregaModel[] = [];
+
+  async onModuleInit() {
+    const constantes: EnderecoLojaConstantsType = EnderecoLojaConstants;
+    const uuidsDasLojas = constantes.LojasCadastradas.map((l) => l.uuidLoja);
+
+    this.enderecoLoja = [];
+
+    for (const uuidLoja of uuidsDasLojas) {
+      try {
+        const resultadosDaLoja = await this.prisma.endereco_de_entrega.findMany(
+          {
+            where: { endereco_uuid: uuidLoja },
+          },
+        );
+
+        // 2. O '...' (spread) joga os itens para dentro do array existente sem resetá-lo
+        this.enderecoLoja.push(...resultadosDaLoja);
+      } catch (e: any) {
+        throw new Error(`Erro ao buscar endereço de entrega: ${e.message}`);
+      }
+    }
+  }
 
   /**
    * Cria um novo endereço de entrega
@@ -119,18 +146,35 @@ export class EnderecoDeEntregaService {
   ): Promise<EnderecoEntregaModel | null> {
     // Verifica se o usuario_uuid é válido
     // TODO: Verificar se o usuário existe no sistema, caso contrário, lançar um erro
+    if (!user) {
+      throw new Error('Usuário não fornecido');
+    }
+
+    if (!input) {
+      throw new Error('Id não fornecido');
+    }
+
+    // Verifica se o endereço é da loja cadastrada
+    const enderecoLoja = this.enderecoLoja.find(
+      (e) => e.endereco_uuid === input,
+    );
+    // se estiver retorna o EXATO endereco do uuid input apenas
+    if (enderecoLoja) {
+      return enderecoLoja;
+    }
+
     const endereco = await this.prisma.endereco_de_entrega
       .findUnique({
-        where: { endereco_uuid: input },
+        where: { endereco_uuid: input, endereco_usuario_uuid: user },
       })
       .catch((e) => {
         throw new Error(`Erro ao buscar endereço de entrega: ${e.message}`);
       });
 
-    if (!endereco) {
+    if (!endereco && !enderecoLoja) {
       throw new Error('Endereço de entrega não encontrado');
     }
-    if (endereco.endereco_usuario_uuid !== user) {
+    if (endereco && endereco.endereco_usuario_uuid !== user) {
       throw new Error('Endereço de entrega não pertence ao usuário');
     }
 
